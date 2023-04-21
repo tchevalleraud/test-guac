@@ -1,0 +1,23 @@
+{
+  "name": "tchevalleraud/apache-guacamole-api",
+  "type": "library",
+  "license": "MIT",
+  "authors": [
+    {
+      "name": "Thibault CHEVALLERAUD",
+      "email": "tchevalleraud@gmail.com"
+    }
+  ],
+  "minimum-stability": "stable",
+  "autoload": {
+    "psr-4": {
+      "Tchevalleraud\\Apache\\Guacamole\\": "src/Guacamole",
+      "Tchevalleraud\\GNS3\\": "src/GNS3"
+    }
+  },
+  "require": {
+    "php": ">=8.0",
+    "guzzlehttp/guzzle": "^7.5",
+    "miyahan/telnet": "^1.1"
+  }
+}

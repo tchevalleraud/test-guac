@@ -1,0 +1,200 @@
+[
+    {
+        "type": "ssh",
+        "label": "RTR-BCB-01",
+        "hostname": "192.168.1.151",
+        "port": 22,
+        "username": "rwa",
+        "password": "rwa",
+        "path": "Extreme Networks \\\/ Formation SPBm\/POD 0"
+    },
+    {
+        "type": "ssh",
+        "label": "RTR-BCB-02",
+        "hostname": "192.168.1.152",
+        "port": 22,
+        "username": "rwa",
+        "password": "rwa",
+        "path": "Extreme Networks \\\/ Formation SPBm\/POD 0"
+    },
+    {
+        "type": "ssh",
+        "label": "RTR-DC1-01",
+        "hostname": "192.168.1.131",
+        "port": 22,
+        "username": "rwa",
+        "password": "rwa",
+        "path": "Extreme Networks \\\/ Formation SPBm\/POD 1"
+    },
+    {
+        "type": "ssh",
+        "label": "RTR-CORE1-01",
+        "hostname": "192.168.1.132",
+        "port": 22,
+        "username": "rwa",
+        "password": "rwa",
+        "path": "Extreme Networks \\\/ Formation SPBm\/POD 1"
+    },
+    {
+        "type": "ssh",
+        "label": "RTR-CORE1-02",
+        "hostname": "192.168.1.133",
+        "port": 22,
+        "username": "rwa",
+        "password": "rwa",
+        "path": "Extreme Networks \\\/ Formation SPBm\/POD 1"
+    },
+    {
+        "type": "ssh",
+        "label": "RTR-ACCESS1-01",
+        "hostname": "192.168.1.134",
+        "port": 22,
+        "username": "rwa",
+        "password": "rwa",
+        "path": "Extreme Networks \\\/ Formation SPBm\/POD 1"
+    },
+    {
+        "type": "ssh",
+        "label": "RTR-ACCESS1-02",
+        "hostname": "192.168.1.135",
+        "port": 22,
+        "username": "rwa",
+        "password": "rwa",
+        "path": "Extreme Networks \\\/ Formation SPBm\/POD 1"
+    },
+    {
+        "type": "ssh",
+        "label": "RTR-DC2-01",
+        "hostname": "192.168.1.136",
+        "port": 22,
+        "username": "rwa",
+        "password": "rwa",
+        "path": "Extreme Networks \\\/ Formation SPBm\/POD 2"
+    },
+    {
+        "type": "ssh",
+        "label": "RTR-CORE2-01",
+        "hostname": "192.168.1.137",
+        "port": 22,
+        "username": "rwa",
+        "password": "rwa",
+        "path": "Extreme Networks \\\/ Formation SPBm\/POD 2"
+    },
+    {
+        "type": "ssh",
+        "label": "RTR-CORE2-02",
+        "hostname": "192.168.1.138",
+        "port": 22,
+        "username": "rwa",
+        "password": "rwa",
+        "path": "Extreme Networks \\\/ Formation SPBm\/POD 2"
+    },
+    {
+        "type": "ssh",
+        "label": "RTR-ACCESS2-01",
+        "hostname": "192.168.1.139",
+        "port": 22,
+        "username": "rwa",
+        "password": "rwa",
+        "path": "Extreme Networks \\\/ Formation SPBm\/POD 2"
+    },
+    {
+        "type": "ssh",
+        "label": "RTR-ACCESS2-02",
+        "hostname": "192.168.1.140",
+        "port": 22,
+        "username": "rwa",
+        "password": "rwa",
+        "path": "Extreme Networks \\\/ Formation SPBm\/POD 2"
+    },
+    {
+        "type": "ssh",
+        "label": "RTR-DC3-01",
+        "hostname": "192.168.1.141",
+        "port": 22,
+        "username": "rwa",
+        "password": "rwa",
+        "path": "Extreme Networks \\\/ Formation SPBm\/POD 3"
+    },
+    {
+        "type": "ssh",
+        "label": "RTR-CORE3-01",
+        "hostname": "192.168.1.142",
+        "port": 22,
+        "username": "rwa",
+        "password": "rwa",
+        "path": "Extreme Networks \\\/ Formation SPBm\/POD 3"
+    },
+    {
+        "type": "ssh",
+        "label": "RTR-CORE3-02",
+        "hostname": "192.168.1.143",
+        "port": 22,
+        "username": "rwa",
+        "password": "rwa",
+        "path": "Extreme Networks \\\/ Formation SPBm\/POD 3"
+    },
+    {
+        "type": "ssh",
+        "label": "RTR-ACCESS3-01",
+        "hostname": "192.168.1.144",
+        "port": 22,
+        "username": "rwa",
+        "password": "rwa",
+        "path": "Extreme Networks \\\/ Formation SPBm\/POD 3"
+    },
+    {
+        "type": "ssh",
+        "label": "RTR-ACCESS3-02",
+        "hostname": "192.168.1.145",
+        "port": 22,
+        "username": "rwa",
+        "password": "rwa",
+        "path": "Extreme Networks \\\/ Formation SPBm\/POD 3"
+    },
+    {
+        "type": "ssh",
+        "label": "RTR-DC4-01",
+        "hostname": "192.168.1.146",
+        "port": 22,
+        "username": "rwa",
+        "password": "rwa",
+        "path": "Extreme Networks \\\/ Formation SPBm\/POD 4"
+    },
+    {
+        "type": "ssh",
+        "label": "RTR-CORE4-01",
+        "hostname": "192.168.1.147",
+        "port": 22,
+        "username": "rwa",
+        "password": "rwa",
+        "path": "Extreme Networks \\\/ Formation SPBm\/POD 4"
+    },
+    {
+        "type": "ssh",
+        "label": "RTR-CORE4-02",
+        "hostname": "192.168.1.148",
+        "port": 22,
+        "username": "rwa",
+        "password": "rwa",
+        "path": "Extreme Networks \\\/ Formation SPBm\/POD 4"
+    },
+    {
+        "type": "ssh",
+        "label": "RTR-ACCESS4-01",
+        "hostname": "192.168.1.149",
+        "port": 22,
+        "username": "rwa",
+        "password": "rwa",
+        "path": "Extreme Networks \\\/ Formation SPBm\/POD 4"
+    },
+    {
+        "type": "ssh",
+        "label": "RTR-ACCESS4-02",
+        "hostname": "192.168.1.150",
+        "port": 22,
+        "username": "rwa",
+        "password": "rwa",
+        "path": "Extreme Networks \\\/ Formation SPBm\/POD 4"
+    }
+]
