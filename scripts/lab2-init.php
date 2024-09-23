@@ -50,23 +50,45 @@
                         sleep(1);
                         $telnet->exec( 'rwa'."\r", false);
                         sleep(1);
-                        $telnet->exec( 'rwa'."\r", false);
-                        sleep(1);
-                        $telnet->exec( 'rwa'."\r", false);
-                        sleep(1);
-                        $telnet->exec( 'enable'."\r", false);
-                        $telnet->exec( 'conf t'."\r", false);
-                        $telnet->exec('sys name '.$key."\r", false);
-                        $telnet->exec('mgmt oob'."\r", false);
-                        $telnet->exec('ip address '. $config[$key]['ip'].'/24'."\r", false);
-                        $telnet->exec('enable'."\r", false);
-                        $telnet->exec('force-topology-ip'."\r", false);
-                        $telnet->exec('end'."\r", false);
-                        $telnet->exec('save config'."\r", false);
-                        sleep(2);
-                        $telnet->exec('exit'."\r", false);
-                        unset($nodes[$key]);
                     }
+
+                    if(preg_match("#^RTR-DC(.*)#", $key)) $ports = "1/1-1/4";
+                    elseif(preg_match("#^RTR-CORE(.*)#", $key)) $ports = "1/1-1/6";
+                    elseif(preg_match("#^RTR-ACCESS(.*)#", $key)) $ports = "1/1-1/4";
+                    else echo $key." : ERROR\n";
+
+                    $telnet->exec( 'enable'."\r", false);
+                    $telnet->exec( 'conf t'."\r", false);
+                    $telnet->exec( 'vlan members remove 1 '.$ports."\r", false);
+                    $telnet->exec( 'vlan create 100 name vGRAY type port-mstprstp 1'."\r", false);
+                    $telnet->exec( 'vlan create 101 name vRED type port-mstprstp 1'."\r", false);
+                    $telnet->exec( 'vlan create 102 name vGREEN type port-mstprstp 1'."\r", false);
+
+                    if(preg_match("#^RTR-DC(.*)#", $key) || preg_match("#^RTR-CORE(.*)#", $key)){
+                        $telnet->exec( 'interface gigabitEthernet '.$ports."\r", false);
+                        $telnet->exec( 'encapsulation dot1q'."\r", false);
+                        $telnet->exec( 'no shutdown'."\r", false);
+                        $telnet->exec( 'vlan members add 100 '.$ports."\r", false);
+                        $telnet->exec( 'vlan members add 101 '.$ports."\r", false);
+                        $telnet->exec( 'vlan members add 102 '.$ports."\r", false);
+                    } else {
+                        $telnet->exec( 'interface gigabitEthernet 1/1-1/2'."\r", false);
+                        $telnet->exec( 'encapsulation dot1q'."\r", false);
+                        $telnet->exec( 'no shutdown'."\r", false);
+                        $telnet->exec( 'interface gigabitEthernet 1/3-1/4'."\r", false);
+                        $telnet->exec( 'no shutdown'."\r", false);
+                        $telnet->exec( 'vlan members add 100 1/1-1/3'."\r", false);
+                        if(preg_match("#^RTR-ACCESS(.*)-01#", $key)){
+                            $telnet->exec( 'vlan members add 101 1/1-1/2,1/4'."\r", false);
+                        } else {
+                            $telnet->exec( 'vlan members add 102 1/1-1/2,1/4'."\r", false);
+                        }
+                    }
+                    $telnet->exec('end'."\r", false);
+                    $telnet->exec('save config'."\r", false);
+                    sleep(2);
+                    $telnet->exec('exit'."\r", false);
+                    unset($nodes[$key]);
                 } catch (Exception $exception){
                     echo $exception->getMessage();
                 }

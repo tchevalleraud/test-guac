@@ -21,14 +21,14 @@
         /**
          * Compute
          */
-        public function getComputes(int $id = null){
+        public function getComputes($id = 'local'){
             $res = $this->request("GET", "/v2/computes");
             $computes = [];
             foreach ($res as $compute) {
                 $c = new Compute();
                 $c->setJson($compute);
                 if($c->getComputeId() == "local") $c->setHost($this->host);
-                $computes[] = $c;
+                $computes[$c->getComputeId()] = $c;
             }
 
             if(is_null($id)) return $computes;
@@ -45,6 +45,14 @@
                     return $c;
                 }
             }
+        }
+
+        /**
+         * Drawing
+         */
+        public function createDrawing(Project $project, $params) {
+            $res = $this->request("POST", "/v2/projects/" . $project->getProjectId() . "/drawings", ['json' => $params]);
+            return $this;
         }
 
         /**
@@ -102,9 +110,25 @@
             return $node;
         }
 
+        public function updateNodeCloud(Project $project, Node $node, $params){
+            $res = $this->request("PUT", "/v2/compute/projects/". $project->getProjectId() ."/cloud/nodes/". $node->getNodeId(), [
+                'json'  => $params
+            ]);
+
+            $node->setJson($res);
+
+            return $node;
+        }
+
         /**
          * Projects
          */
+        public function closeProject(Project $project){
+            $res = $this->request("POST", "/v2/projects/". $project->getProjectId()."/close");
+
+            return $project;
+        }
+
         public function createProject(Project $project){
             $res = $this->request("POST", "/v2/projects", [
                 'json'  => $project->getJson()
@@ -121,6 +145,12 @@
                 return false;
             }
             return true;
+        }
+
+        public function openProject(Project $project){
+            $res = $this->request("POST", "/v2/projects/". $project->getProjectId()."/open");
+            $project->setJson($res);
+            return $project;
         }
 
         public function searchProject(Project $project){
@@ -142,15 +172,14 @@
         public function startNodeProject(Project $project){
             $res = $this->request("POST", "/v2/projects/". $project->getProjectId() ."/nodes/start");
 
-            return true;
+            return json_decode($res);
         }
 
         /**
          * Template
          */
-        public function searchTemplate(string $name, int $compute_id = 0){
+        public function searchTemplate(string $name, $compute_id = 'local'){
             $res = $this->request("GET", "/v2/templates");
-
             $compute = $this->getComputes($compute_id);
 
             foreach ($res as $r){
@@ -161,13 +190,40 @@
 
                         return $template;
                     }
-                } elseif($r['name'] == "Cloud"){
+                } elseif($r['name'] == $name){
                     $template = new Template();
                     $template->setJson($r);
                     $template->setComputeId($compute->getComputeId());
 
                     return $template;
                 }
+                /**
+                if($compute_id == 0){
+                    if($r['compute_id'] == 'local'){
+                        if($r['name'] == $name){
+                            $template = new Template();
+                            $template->setJson($r);
+
+                            return $template;
+                        }
+                    }
+                }
+                if($r['compute_id'] == $compute->getComputeId()){
+                    if($r['name'] == $name){
+                        $template = new Template();
+                        $template->setJson($r);
+
+                        return $template;
+                    }
+                }
+                if($r['name'] == "Cloud"){
+                    $template = new Template();
+                    $template->setJson($r);
+                    $template->setComputeId($compute->getComputeId());
+
+                    return $template;
+                }
+                 * */
             }
 
             throw new \Exception("Template not found.");

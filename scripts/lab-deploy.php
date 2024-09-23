@@ -1,12 +1,204 @@
 <?php
     require_once "./vendor/autoload.php";
 
-    $projectName = "Extreme Networks - Formation SPBm";
+    $projectName    = "Extreme Networks - Deepdive SPBm";
 
-    $gns3   = new \Tchevalleraud\GNS3\GNS3("192.168.1.50");
+    // Instance GP1-M (3 by Zone)(16 vCore / 64GO RAM / 1,5Gps) (+60Go Disk)
+    $servers        = [
+        1   => "51.158.184.86",
+        2   => "51.158.165.88",
+        3   => "51.158.162.241"
+    ];
+
+    die();
+
+    foreach ($servers as $pod => $server){
+        print_r("Demarrage du POD ".$pod."\n");
+        $gns3       = new Tchevalleraud\GNS3\GNS3($server);
+
+        $cloud      = $gns3->searchTemplate("Cloud");
+        $switch     = $gns3->searchTemplate("Ethernet switch");
+        $voss       = $gns3->searchTemplate("Extreme Networks DT v8.10.4.0");
+        $debian     = $gns3->searchTemplate("Debian 12.4");
+
+        $project    = new \Tchevalleraud\GNS3\Project($projectName);
+        $project->setShowGrid(false);
+        $project->setShowInterfaceLabels(false);
+
+        $gns3->deleteProject($project);
+        $gns3->createProject($project);
+
+        print_r("Demarrage dans 10 sec\n");
+        sleep(10);
+
+        // Management
+        $MGMT = $gns3->createTemplateNode($project, $cloud);
+        $MGMT = $gns3->updateNode($project, $MGMT, ['name' => 'MGMT', 'x' => -50, 'y' => -580, 'z' => 3]);
+        $MGMT = $gns3->updateNodeCloud($project, $MGMT, ['ports_mapping' => [['lport' => 40000 + $pod, 'name' => "UDP tunnel 1", 'port_number' => 0, 'rhost' => "127.0.0.1", 'rport' => 40000 + $pod, 'type' => "udp"]]]);
+        $switchlv1 = $gns3->createTemplateNode($project, $switch);
+        $switchlv1 = $gns3->updateNode($project, $switchlv1, ['name'=> 'sw_mgmt', 'x' => 0, 'y' => -550, 'z' => 2]);
+
+        // Cloud
+        if(array_key_exists($pod+1, $servers)){
+            $lport = 40000 + ($pod * 1000) + (($pod + 1) * 100);
+            $rport = 40000 + (($pod + 1) * 1000) + ($pod * 100);
+            $nextPod = $gns3->createTemplateNode($project, $cloud);
+            $nextPod = $gns3->updateNode($project, $nextPod, ['name' => 'vers_POD'.($pod+1), 'x' => 400, 'y' => -400, 'z' => 3]);
+            $nextPod = $gns3->updateNodeCloud($project, $nextPod, ['ports_mapping' => [
+                ['lport' => $lport+1, 'name' => "UDP tunnel 1", 'port_number' => 0, 'rhost' => $servers[$pod+1], 'rport' => $rport+1, 'type' => "udp"],
+                ['lport' => $lport+2, 'name' => "UDP tunnel 1", 'port_number' => 0, 'rhost' => $servers[$pod+1], 'rport' => $rport+2, 'type' => "udp"]
+            ]]);
+        } else {
+            $lport = 40000 + ($pod * 1000) + (1 * 100);
+            $rport = 40000 + (1 * 1000) + ($pod * 100);
+            $nextPod = $gns3->createTemplateNode($project, $cloud);
+            $nextPod = $gns3->updateNode($project, $nextPod, ['name' => 'vers_POD1', 'x' => 400, 'y' => -400, 'z' => 3]);
+            $nextPod = $gns3->updateNodeCloud($project, $nextPod, ['ports_mapping' => [
+                ['lport' => $lport+1, 'name' => "UDP tunnel 1", 'port_number' => 0, 'rhost' => $servers[1], 'rport' => $rport+1, 'type' => "udp"],
+                ['lport' => $lport+2, 'name' => "UDP tunnel 1", 'port_number' => 0, 'rhost' => $servers[1], 'rport' => $rport+2, 'type' => "udp"]
+            ]]);
+        }
+
+        if(array_key_exists($pod-1, $servers)){
+            $lport = 40000 + ($pod * 1000) + (($pod - 1) * 100);
+            $rport = 40000 + (($pod - 1) * 1000) + ($pod * 100);
+            $prevPod = $gns3->createTemplateNode($project, $cloud);
+            $prevPod = $gns3->updateNode($project, $prevPod, ['name' => 'vers_POD'.($pod-1), 'x' => -500, 'y' => -400, 'z' => 3]);
+            $prevPod = $gns3->updateNodeCloud($project, $prevPod, ['ports_mapping' => [
+                ['lport' => $lport+1, 'name' => "UDP tunnel 1", 'port_number' => 0, 'rhost' => $servers[$pod-1], 'rport' => $rport+1, 'type' => "udp"],
+                ['lport' => $lport+2, 'name' => "UDP tunnel 1", 'port_number' => 0, 'rhost' => $servers[$pod-1], 'rport' => $rport+2, 'type' => "udp"]
+            ]]);
+        } else {
+            $lport = 40000 + ($pod * 1000) + (sizeof($servers) * 100);
+            $rport = 40000 + (sizeof($servers) * 1000) + ($pod * 100);
+            $prevPod = $gns3->createTemplateNode($project, $cloud);
+            $prevPod = $gns3->updateNode($project, $prevPod, ['name' => 'vers_POD'.(sizeof($servers)), 'x' => -500, 'y' => -400, 'z' => 3]);
+            $prevPod = $gns3->updateNodeCloud($project, $prevPod, ['ports_mapping' => [
+                ['lport' => $lport+1, 'name' => "UDP tunnel 1", 'port_number' => 0, 'rhost' => $servers[sizeof($servers)], 'rport' => $rport+1, 'type' => "udp"],
+                ['lport' => $lport+2, 'name' => "UDP tunnel 1", 'port_number' => 0, 'rhost' => $servers[sizeof($servers)], 'rport' => $rport+2, 'type' => "udp"]
+            ]]);
+        }
+
+        // Devices
+        $DC1        = $gns3->createTemplateNode($project, $voss);
+        $DC1        = $gns3->updateNode($project, $DC1, ['name' => 'RTR-DC'.$pod.'-01', 'x' => 0, 'y' => -400, 'z' => 3]);
+        $CORE1      = $gns3->createTemplateNode($project, $voss);
+        $CORE1      = $gns3->updateNode($project, $CORE1, ['name' => 'RTR-CORE'.$pod.'-01', 'x' => -300, 'y' => -100, 'z' => 3]);
+        $CORE1      = $gns3->updateNode($project, $CORE1, ['label' => ['text' => 'RTR-CORE'.$pod.'-01', 'x' => -110, 'y' => 15]]);
+        $CORE2      = $gns3->createTemplateNode($project, $voss);
+        $CORE2      = $gns3->updateNode($project, $CORE2, ['name' => 'RTR-CORE'.$pod.'-02', 'x' => 300, 'y' => -100, 'z' => 3]);
+        $CORE2      = $gns3->updateNode($project, $CORE2, ['label' => ['text' => 'RTR-CORE'.$pod.'-02', 'x' => 60, 'y' => 15]]);
+        $ACCESS1    = $gns3->createTemplateNode($project, $voss);
+        $ACCESS1    = $gns3->updateNode($project, $ACCESS1, ['name' => 'RTR-ACCESS'.$pod.'-01', 'x' => -300, 'y' => 200, 'z' => 3]);
+        $ACCESS1    = $gns3->updateNode($project, $ACCESS1, ['label' => ['text' => 'RTR-ACCESS'.$pod.'-01', 'x' => -125, 'y' => 15]]);
+        $ACCESS2    = $gns3->createTemplateNode($project, $voss);
+        $ACCESS2    = $gns3->updateNode($project, $ACCESS2, ['name' => 'RTR-ACCESS'.$pod.'-02', 'x' => 300, 'y' => 200, 'z' => 3]);
+        $ACCESS2    = $gns3->updateNode($project, $ACCESS2, ['label' => ['text' => 'RTR-ACCESS'.$pod.'-02', 'x' => 60, 'y' => 15]]);
+        $PC11       = $gns3->createTemplateNode($project, $debian);
+        $PC11       = $gns3->updateNode($project, $PC11, ['name' => 'PC'.$pod.'11', 'x' => -400, 'y' => 400, 'z' => 3]);
+        $PC11       = $gns3->updateNode($project, $PC11, ['label' => ['text' => 'PC'.$pod.'11', 'x' => 10, 'y' => 60]]);
+        $PC21       = $gns3->createTemplateNode($project, $debian);
+        $PC21       = $gns3->updateNode($project, $PC21, ['name' => 'PC'.$pod.'21', 'x' => -200, 'y' => 400, 'z' => 3]);
+        $PC21       = $gns3->updateNode($project, $PC21, ['label' => ['text' => 'PC'.$pod.'21', 'x' => 10, 'y' => 60]]);
+        $PC12       = $gns3->createTemplateNode($project, $debian);
+        $PC12       = $gns3->updateNode($project, $PC12, ['name' => 'PC'.$pod.'12', 'x' => 200, 'y' => 400, 'z' => 3]);
+        $PC12       = $gns3->updateNode($project, $PC12, ['label' => ['text' => 'PC'.$pod.'12', 'x' => 10, 'y' => 60]]);
+        $PC31       = $gns3->createTemplateNode($project, $debian);
+        $PC31       = $gns3->updateNode($project, $PC31, ['name' => 'PC'.$pod.'31', 'x' => 400, 'y' => 400, 'z' => 3]);
+        $PC31       = $gns3->updateNode($project, $PC31, ['label' => ['text' => 'PC'.$pod.'31', 'x' => 10, 'y' => 60]]);
+
+        // Links MGMT
+        $gns3->createLink($project, $MGMT, ['adapter_number' => 0, 'port_number' => 0], $switchlv1, ['adapter_number' => 0, 'port_number' => 0]);
+        $gns3->createLink($project, $switchlv1, ['adapter_number' => 0, 'port_number' => 1], $DC1, ['adapter_number' => 0, 'port_number' => 0]);
+        $gns3->createLink($project, $switchlv1, ['adapter_number' => 0, 'port_number' => 2], $CORE1, ['adapter_number' => 0, 'port_number' => 0]);
+        $gns3->createLink($project, $switchlv1, ['adapter_number' => 0, 'port_number' => 3], $CORE2, ['adapter_number' => 0, 'port_number' => 0]);
+        $gns3->createLink($project, $switchlv1, ['adapter_number' => 0, 'port_number' => 4], $ACCESS1, ['adapter_number' => 0, 'port_number' => 0]);
+        $gns3->createLink($project, $switchlv1, ['adapter_number' => 0, 'port_number' => 5], $ACCESS2, ['adapter_number' => 0, 'port_number' => 0]);
+
+        // Links Cloud
+        $gns3->createLink($project, $DC1, ['adapter_number' => 3, 'port_number' => 0], $nextPod, ['adapter_number' => 0, 'port_number' => 0]);
+        $gns3->createLink($project, $DC1, ['adapter_number' => 4, 'port_number' => 0], $prevPod, ['adapter_number' => 0, 'port_number' => 0]);
+        $gns3->createLink($project, $CORE1, ['adapter_number' => 6, 'port_number' => 0], $prevPod, ['adapter_number' => 0, 'port_number' => 1]);
+        $gns3->createLink($project, $CORE2, ['adapter_number' => 6, 'port_number' => 0], $nextPod, ['adapter_number' => 0, 'port_number' => 1]);
+
+        // Links Devices
+        $gns3->createLink($project, $DC1, ['adapter_number' => 1, 'port_number' => 0], $CORE1, ['adapter_number' => 5, 'port_number' => 0]);
+        $gns3->createLink($project, $DC1, ['adapter_number' => 2, 'port_number' => 0], $CORE2, ['adapter_number' => 5, 'port_number' => 0]);
+        $gns3->createLink($project, $CORE1, ['adapter_number' => 1, 'port_number' => 0], $CORE2, ['adapter_number' => 1, 'port_number' => 0]);
+        $gns3->createLink($project, $CORE1, ['adapter_number' => 2, 'port_number' => 0], $CORE2, ['adapter_number' => 2, 'port_number' => 0]);
+        $gns3->createLink($project, $CORE1, ['adapter_number' => 3, 'port_number' => 0], $ACCESS1, ['adapter_number' => 1, 'port_number' => 0]);
+        $gns3->createLink($project, $CORE1, ['adapter_number' => 4, 'port_number' => 0], $ACCESS2, ['adapter_number' => 1, 'port_number' => 0]);
+        $gns3->createLink($project, $CORE2, ['adapter_number' => 3, 'port_number' => 0], $ACCESS1, ['adapter_number' => 2, 'port_number' => 0]);
+        $gns3->createLink($project, $CORE2, ['adapter_number' => 4, 'port_number' => 0], $ACCESS2, ['adapter_number' => 2, 'port_number' => 0]);
+        $gns3->createLink($project, $ACCESS1, ['adapter_number' => 3, 'port_number' => 0], $PC11, ['adapter_number' => 0, 'port_number' => 0]);
+        $gns3->createLink($project, $ACCESS1, ['adapter_number' => 4, 'port_number' => 0], $PC21, ['adapter_number' => 0, 'port_number' => 0]);
+        $gns3->createLink($project, $ACCESS2, ['adapter_number' => 3, 'port_number' => 0], $PC12, ['adapter_number' => 0, 'port_number' => 0]);
+        $gns3->createLink($project, $ACCESS2, ['adapter_number' => 4, 'port_number' => 0], $PC31, ['adapter_number' => 0, 'port_number' => 0]);
+
+        $gns3->createDrawing($project, [
+            'svg'   => "<svg width=\"1200\" height=\"1000\"><rect width=\"1200\" height=\"1000\" fill=\"#ffffff\" fill-opacity=\"1.0\" stroke-width=\"2\" stroke=\"#000000\" /></svg>",
+            'x'     => -575,
+            'y'     => -450,
+            'z'     => 2
+        ]);
+
+        print_r("Creation completed\n");
+
+        $nodes["POD".$pod."-DC1"] = $gns3->startNode($project, $DC1);
+    }
+
+    for($i = (60 * 4); $i > 0; $i--){
+        if($i == 60) echo $i."sec\n";
+        elseif($i == 120) echo $i."sec\n";
+        elseif($i == 180) echo $i."sec\n";
+        elseif($i <= 10) echo $i."sec\n";
+        sleep(1);
+    }
+
+    print_r($nodes);
+    die('ok');
+    while (true){
+        if(sizeof($nodes) >= 1){
+            foreach ($nodes as $key => $node){
+                $ip = $gns3->searchComputes($node->getComputeId())->getHost();
+                $port = $node->getConsole();
+
+                try {
+                    $telnet = new \miyahan\network\Telnet($ip, $port);
+                    $telnet->connect();
+                    $result = $telnet->exec("\r\n", false);
+                    if(preg_match("#^root@[a-zA-Z0-9-]+:(.*)$#", $result)){
+                        echo "config ".$key."\n";
+                        $telnet->exec( 'cd /intflash');
+                        $telnet->exec( 'touch __vm_config.yaml');
+                        $telnet->exec( 'echo "---" >> __vm_config.yaml');
+                        $telnet->exec( 'echo "system:" >> __vm_config.yaml');
+                        $telnet->exec( 'echo "  license: PRD-5000-PRMR,PRD-5000-MACSEC" >> __vm_config.yaml');
+                        $telnet->exec( 'echo "  slots:" >> __vm_config.yaml');
+                        $telnet->exec( 'echo "    - num: 1" >> __vm_config.yaml');
+                        $telnet->exec( 'echo "      type: '. $config[$key]['model'].'" >> __vm_config.yaml');
+                        $telnet->exec( 'echo "      serial-number: '. $config[$key]['serial'].'" >> __vm_config.yaml');
+                        if(array_key_exists('vims', $config[$key])){
+                            $telnet->exec( 'echo "      vims:" >> __vm_config.yaml');
+                            $telnet->exec( 'echo "        - slot: A" >> __vm_config.yaml');
+                            $telnet->exec( 'echo "          type: '. $config[$key]['vims'].'" >> __vm_config.yaml');
+                        }
+                        $telnet->exec( 'touch config.cfg');
+                        $telnet->exec( 'echo "no mgmt dhcp-client" >> config.cfg');
+                        $telnet->exec( 'reboot');
+                        unset($nodes[$key]);
+                    }
+                } catch (Exception $exception){
+                    echo $exception->getMessage();
+                }
+            }
+        } else break;
+    }
+
+
+    die("*** END Script ***");
+
     $config = [
-        'RTR-BCB-01'        => ['ip' => '192.168.1.151', 'pod' => 0, 'model' => '5520-24X', 'serial' => '05520-00151', 'vims' => '5520-VIM-4XE'],
-        'RTR-BCB-02'        => ['ip' => '192.168.1.152', 'pod' => 0, 'model' => '5520-24X', 'serial' => '05520-00152', 'vims' => '5520-VIM-4XE'],
         'RTR-DC1-01'        => ['ip' => '192.168.1.131', 'pod' => 1, 'model' => '5520-24X', 'serial' => '05520-10131', 'vims' => '5520-VIM-4XE'],
         'RTR-CORE1-01'      => ['ip' => '192.168.1.132', 'pod' => 1, 'model' => '5520-24X', 'serial' => '05520-10132', 'vims' => '5520-VIM-4XE'],
         'RTR-CORE1-02'      => ['ip' => '192.168.1.133', 'pod' => 1, 'model' => '5520-24X', 'serial' => '05520-10133', 'vims' => '5520-VIM-4XE'],
@@ -44,7 +236,7 @@
         'PC15'              => ['pod' => 4],
         'PC16'              => ['pod' => 4],
     ];
-    $hostGuac   = "https://guacamole.pwsb.fr";
+    $hostGuac   = "http://192.168.1.250:8080";
     $username   = "tchevalleraud";
     $password   = "tnt_xzw7FJV8vwx8tfx";
 
@@ -84,11 +276,7 @@
     $RTR_CORE4_01   = $gns3->createTemplateNode($project, $vVOSS1, ['name' => 'RTR-CORE4-01', 'x' => 400, 'y'=> 500]);
     $RTR_CORE4_02   = $gns3->createTemplateNode($project, $vVOSS1, ['name' => 'RTR-CORE4-02', 'x' => 800, 'y'=> 500]);
     $RTR_ACCESS4_01 = $gns3->createTemplateNode($project, $vVOSS1, ['name' => 'RTR-ACCESS4-01', 'x' => 400, 'y'=> 700]);
-    $RTR_ACCESS4_02 = $gns3->createTemplateNode($project, $vVOSS1, ['name' => 'RTR-ACCESS4-02', 'x' => 800, 'y'=> 700]);;
-
-    //POD 0
-    $RTR_BCB_01     = $gns3->createTemplateNode($project, $vVOSS0, ['name' => 'RTR-BCB-01', 'x' => -300, 'y'=> 0]);
-    $RTR_BCB_02     = $gns3->createTemplateNode($project, $vVOSS1, ['name' => 'RTR-BCB-02', 'x' => 300, 'y'=> 0]);
+    $RTR_ACCESS4_02 = $gns3->createTemplateNode($project, $vVOSS1, ['name' => 'RTR-ACCESS4-02', 'x' => 800, 'y'=> 700]);
 
     //vPC
     $vPC1   = $gns3->createNode($project, new \Tchevalleraud\GNS3\Node(['compute_id' => $gns3->getComputes(0)->getComputeId(), 'name' => 'PC1', 'node_type' => 'vpcs', 'x' => -900, 'y' => -900]));
@@ -130,18 +318,10 @@
     $MGMT_RTR_ACCESS4_01    = $gns3->createTemplateNode($project, $cloud, ['compute_id' => $gns3->getComputes(1)->getComputeId(), 'name' => 'MGMT_RTR_ACCESS4_01', 'x' => 1100, 'y' => 600]);
     $MGMT_RTR_ACCESS4_02    = $gns3->createTemplateNode($project, $cloud, ['compute_id' => $gns3->getComputes(1)->getComputeId(), 'name' => 'MGMT_RTR_ACCESS4_02', 'x' => 1100, 'y' => 700]);
 
-    $MGMT_RTR_BCB_01    = $gns3->createTemplateNode($project, $cloud, ['compute_id' => $gns3->getComputes(0)->getComputeId(), 'name' => 'MGMT_RTR_BCB_01', 'x' => -1100, 'y' => 0]);
-    $MGMT_RTR_BCB_02    = $gns3->createTemplateNode($project, $cloud, ['compute_id' => $gns3->getComputes(1)->getComputeId(), 'name' => 'MGMT_RTR_BCB_02', 'x' => 1100, 'y' => 0]);
-
 
     /**
      * LINKS
      */
-    //POD 0
-    $gns3->createLink($project, $RTR_BCB_01, ['adapter_number' => 1, 'port_number' => 0], $RTR_DC1_01, ['adapter_number' => 5, 'port_number' => 0]);
-    $gns3->createLink($project, $RTR_BCB_01, ['adapter_number' => 2, 'port_number' => 0], $RTR_DC3_01, ['adapter_number' => 5, 'port_number' => 0]);
-    $gns3->createLink($project, $RTR_BCB_02, ['adapter_number' => 1, 'port_number' => 0], $RTR_DC2_01, ['adapter_number' => 5, 'port_number' => 0]);
-    $gns3->createLink($project, $RTR_BCB_02, ['adapter_number' => 2, 'port_number' => 0], $RTR_DC4_01, ['adapter_number' => 5, 'port_number' => 0]);
     //INTERCO
     $gns3->createLink($project, $RTR_DC1_01, ['adapter_number' => 3, 'port_number' => 0], $RTR_DC3_01, ['adapter_number' => 3, 'port_number' => 0]);
     $gns3->createLink($project, $RTR_DC1_01, ['adapter_number' => 4, 'port_number' => 0], $RTR_DC2_01, ['adapter_number' => 4, 'port_number' => 0]);
@@ -224,8 +404,6 @@
     $gns3->createLink($project, $MGMT_RTR_CORE4_02, ['adapter_number' => 0, 'port_number' => 0], $RTR_CORE4_02, ['adapter_number' => 0, 'port_number' => 0]);
     $gns3->createLink($project, $MGMT_RTR_ACCESS4_01, ['adapter_number' => 0, 'port_number' => 0], $RTR_ACCESS4_01, ['adapter_number' => 0, 'port_number' => 0]);
     $gns3->createLink($project, $MGMT_RTR_ACCESS4_02, ['adapter_number' => 0, 'port_number' => 0], $RTR_ACCESS4_02, ['adapter_number' => 0, 'port_number' => 0]);
-    $gns3->createLink($project, $MGMT_RTR_BCB_01, ['adapter_number' => 0, 'port_number' => 0], $RTR_BCB_01, ['adapter_number' => 0, 'port_number' => 0]);
-    $gns3->createLink($project, $MGMT_RTR_BCB_02, ['adapter_number' => 0, 'port_number' => 0], $RTR_BCB_02, ['adapter_number' => 0, 'port_number' => 0]);
 
     /**
      * Guacamole & MobaXterm & Terminus
@@ -282,8 +460,6 @@
     /**
      * Start Node and init script
      */
-    $nodes["RTR-BCB-01"] = $gns3->startNode($project, $RTR_BCB_01);
-    $nodes["RTR-BCB-02"] = $gns3->startNode($project, $RTR_BCB_02);
     $nodes["RTR-DC1-01"] = $gns3->startNode($project, $RTR_DC1_01);
     $nodes["RTR-CORE1-01"] = $gns3->startNode($project, $RTR_CORE1_01);
     $nodes["RTR-CORE1-02"] = $gns3->startNode($project, $RTR_CORE1_02);

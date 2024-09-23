@@ -49,6 +49,7 @@
         public function getJson(){
             $data = [];
             if(!is_null($this->getName())) $data['name'] = $this->getName();
+            if(!is_null($this->getComputeId())) $data['compute_id'] = $this->getComputeId();
             return $data;
         }
 

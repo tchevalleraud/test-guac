@@ -32,46 +32,11 @@
 
     $nodes = [];
     foreach ($config as $name => $c){
-        $nodes[$name] = $gns3->searchNode($project, $name);
+        $gns3->startNode($project, $gns3->searchNode($project, $name));
     }
 
-    while (true){
-        if(sizeof($nodes) >= 1){
-            foreach ($nodes as $key => $node){
-                $ip = $gns3->searchComputes($node->getComputeId())->getHost();
-                $port = $node->getConsole();
-
-                try {
-                    $telnet = new \miyahan\network\Telnet($ip, $port);
-                    $telnet->connect();
-                    $result = $telnet->exec("\r\n", false);
-                    if(preg_match("#^Login:(.*)$#", $result)){
-                        $telnet->exec( 'rwa'."\r", false);
-                        sleep(1);
-                        $telnet->exec( 'rwa'."\r", false);
-                        sleep(1);
-                        $telnet->exec( 'rwa'."\r", false);
-                        sleep(1);
-                        $telnet->exec( 'rwa'."\r", false);
-                        sleep(1);
-                        $telnet->exec( 'enable'."\r", false);
-                        $telnet->exec( 'conf t'."\r", false);
-                        $telnet->exec('sys name '.$key."\r", false);
-                        $telnet->exec('mgmt oob'."\r", false);
-                        $telnet->exec('ip address '. $config[$key]['ip'].'/24'."\r", false);
-                        $telnet->exec('enable'."\r", false);
-                        $telnet->exec('force-topology-ip'."\r", false);
-                        $telnet->exec('end'."\r", false);
-                        $telnet->exec('save config'."\r", false);
-                        sleep(2);
-                        $telnet->exec('exit'."\r", false);
-                        unset($nodes[$key]);
-                    }
-                } catch (Exception $exception){
-                    echo $exception->getMessage();
-                }
-            }
-        } else break;
+    for($i = 1; $i <= 16; $i++){
+        $gns3->startNode($project, $gns3->searchNode($project, "PC".$i));
     }
 
     /**

@@ -46,25 +46,7 @@
                     $telnet->connect();
                     $result = $telnet->exec("\r\n", false);
                     if(preg_match("#^Login:(.*)$#", $result)){
-                        $telnet->exec( 'rwa'."\r", false);
-                        sleep(1);
-                        $telnet->exec( 'rwa'."\r", false);
-                        sleep(1);
-                        $telnet->exec( 'rwa'."\r", false);
-                        sleep(1);
-                        $telnet->exec( 'rwa'."\r", false);
-                        sleep(1);
-                        $telnet->exec( 'enable'."\r", false);
-                        $telnet->exec( 'conf t'."\r", false);
-                        $telnet->exec('sys name '.$key."\r", false);
-                        $telnet->exec('mgmt oob'."\r", false);
-                        $telnet->exec('ip address '. $config[$key]['ip'].'/24'."\r", false);
-                        $telnet->exec('enable'."\r", false);
-                        $telnet->exec('force-topology-ip'."\r", false);
-                        $telnet->exec('end'."\r", false);
-                        $telnet->exec('save config'."\r", false);
-                        sleep(2);
-                        $telnet->exec('exit'."\r", false);
+                        echo $key." : OK \n";
                         unset($nodes[$key]);
                     }
                 } catch (Exception $exception){
